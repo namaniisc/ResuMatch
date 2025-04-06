@@ -1,4 +1,3 @@
-# test.py
 import os
 from docx2pdf import convert
 
@@ -10,6 +9,5 @@ def convert_docs_to_pdf(directory):
             convert(docx_path)
             print(f"Converted {file} to PDF")
 
-if __name__ == "__main__":
-    directory = 'Resumes'
-    convert_docs_to_pdf(directory)
+directory = 'Resumes'
+convert_docs_to_pdf(directory)
