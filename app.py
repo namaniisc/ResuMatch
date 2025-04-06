@@ -52,31 +52,41 @@ category_mapping = {
     0: "Advocate",
 }
 
-def categorize_resume(uploaded_file, output_directory):
-    reader = PdfReader(uploaded_file)
-    page = reader.pages[0]
-    text = page.extract_text()
-    cleaned_resume = cleanResume(text)
-
-    input_features = word_vector.transform([cleaned_resume])
-    prediction_id = model.predict(input_features)[0]
-    category_name = category_mapping.get(prediction_id, "Unknown")
+def categorize_resumes(uploaded_files, output_directory):
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
     
-    # Create category folder if it doesn't exist
-    category_folder = os.path.join(output_directory, category_name)
-    if not os.path.exists(category_folder):
-        os.makedirs(category_folder)
+    results = []
+    for uploaded_file in uploaded_files:
+        if uploaded_file.name.endswith('.pdf'):
+            result = categorize_resume(uploaded_file, output_directory)
+            results.append(result)
     
-    target_path = os.path.join(category_folder, uploaded_file.name)
-    with open(target_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
-    
-    return {'filename': uploaded_file.name, 'category': category_name}
+    results_df = pd.DataFrame(results)
+    return results_df
 
 def main():
     st.title("Resume Categorizer Application")
     st.subheader("With Python & Machine Learning")
-    st.write("Drop your resumes here, and we’ll figure out their job categories for you!")
+    
+    uploaded_files = st.file_uploader("Choose PDF files", type="pdf", accept_multiple_files=True)
+    output_directory = st.text_input("Output Directory", "categorized_resumes")
+    
+    if st.button("Categorize Resumes"):
+        if uploaded_files and output_directory:
+            results_df = categorize_resumes(uploaded_files, output_directory)
+            st.write(results_df)
+            results_csv = results_df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="Download results as CSV",
+                data=results_csv,
+                file_name='categorized_resumes.csv',
+                mime='text/csv',
+            )
+            st.success("Resumes categorization and processing completed.")
+        else:
+            st.error("Please upload files and specify the output directory.")
 
 if __name__ == "__main__":
     main()
+
